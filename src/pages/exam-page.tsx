@@ -33,12 +33,14 @@ interface ReportModalProps {
 
 }
 
-function QuestionView() {
+function ExamQuestionView() {
     const [user, setUser] = useState<UserResponse | null>(null);
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [mockExam, setMockExam] = useState<MockExam | null>(null);
     const [viewedQuestions, setViewedQuestions] = useState<{ [key: number]: boolean }>({});
+    const initialTime = 30 * 60;
+    const [timeLeft, setTimeLeft] = useState(initialTime);
 
     useEffect(() => {
         LoadData();
@@ -71,6 +73,10 @@ function QuestionView() {
         });
         setQuestions(updatedQuestions);
     };
+
+    const finishExam = async () => {
+
+    }
 
     const handleQuestionSelect = (index: number) => {
         setCurrentQuestionIndex(index);
@@ -152,14 +158,46 @@ function QuestionView() {
         );
     }
 
-    function ExplanationCard({ explanation }: { explanation: string }) {
+    function TimerCard({ explanation, onTimerEnd }: {onTimerEnd: () => void }) {
+        // Set the initial countdown time (30 minutes = 1800 seconds)
+        const initialTime = 30 * 60;
+    
+        // State to keep track of remaining time in seconds
+        const [timeLeft, setTimeLeft] = useState(initialTime);
+    
+        // Convert the remaining time in seconds to a display format (MM:SS)
+        const formatTimeLeft = (time:any) => {
+            const minutes = Math.floor(time / 60);
+            const seconds = time % 60;
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        };
+    
+        useEffect(() => {
+            // If timeLeft is 0, call the onTimerEnd function and return to stop the timer
+            if (timeLeft === 0) {
+                onTimerEnd();
+                return;
+            }
+    
+            // Set up a timer to decrement the timeLeft state every second
+            const interval = setInterval(() => {
+                setTimeLeft((timeLeft) => timeLeft - 1);
+            }, 1000);
+    
+            // Clear the interval timer if the component is unmounted
+            return () => clearInterval(interval);
+        }, [timeLeft, onTimerEnd]);
+    
         return (
             <Box maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden">
                 <Box p="6">
                     <Text fontWeight="bold" fontSize="xl" textAlign="center" mb="4">
-                        Explanation
+                        Remaining Time
                     </Text>
-                    <Text fontSize="md">{explanation}</Text>
+                    {/* Display the formatted time left */}
+                    <Text fontSize="2xl" textAlign="center" mb="4">
+                        {formatTimeLeft(timeLeft)}
+                    </Text>
                 </Box>
             </Box>
         );
@@ -248,9 +286,7 @@ function QuestionView() {
                             </Box>
 
                             <Box gridArea={{ base: "5 / 1 / 6 / 2", md: "1 / 3 / 2 / 4" }}>
-                                <ExplanationCard
-                                    explanation={questions[currentQuestionIndex].explanation}
-                                />
+                            <TimerCard onTimerEnd={finishExam} />
                             </Box>
 
                             <Box
@@ -287,4 +323,4 @@ function QuestionView() {
     );
 }
 
-export default QuestionView;
+export default ExamQuestionView;

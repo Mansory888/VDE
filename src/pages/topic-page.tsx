@@ -20,6 +20,7 @@ type QuestionCardProps = {
 
 type AnswerCardProps = {
     answers: Answer[];
+    questionStatus: string;
     onAnswerSelect: (answerId: number, selected: boolean) => void;
 };
 
@@ -29,11 +30,16 @@ type TableCardProps = {
     viewedQuestions: { [key: number]: boolean };
 };
 
-interface ReportModalProps {
+type ReportModalProps = {
 
 }
 
-function QuestionView() {
+type ExplanationCardProps = {
+    explanation: string;
+    showExplanation: boolean; // Add this line
+}
+
+function TopicQuestionView() {
     const [user, setUser] = useState<UserResponse | null>(null);
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -54,21 +60,20 @@ function QuestionView() {
     }
 
     const handleAnswerSelect = (answerId: number, selected: boolean) => {
-        // Update the selected state of the answer in the current question
         const updatedQuestions = questions.map((question, index) => {
             if (index === currentQuestionIndex) {
+                const updatedAnswers = question.answers.map((answer) => {
+                    return answer.answer_id === answerId ? { ...answer, selected } : answer;
+                });
+    
                 return {
                     ...question,
-                    answers: question.answers.map((answer) => {
-                        if (answer.answer_id === answerId) {
-                            return { ...answer, selected };
-                        }
-                        return answer;
-                    }),
+                    answers: updatedAnswers,
                 };
             }
             return question;
         });
+    
         setQuestions(updatedQuestions);
     };
 
@@ -76,6 +81,28 @@ function QuestionView() {
         setCurrentQuestionIndex(index);
         setViewedQuestions((prev) => ({ ...prev, [index]: true }));
     };
+
+    const handleSubmitAnswer = () => {
+        const updatedQuestions = questions.map((question, index) => {
+            if (index === currentQuestionIndex) {
+                // Assume multiple correct answers are possible
+                let correctAnswers = question.answers.filter(ans => ans.is_correct).map(ans => ans.answer_id);
+                let selectedAnswers = question.answers.filter(ans => ans.selected).map(ans => ans.answer_id);
+
+                // Evaluate correctness
+                const isCorrect = correctAnswers.length === selectedAnswers.length && correctAnswers.every(id => selectedAnswers.includes(id));
+
+                return {
+                    ...question,
+                    status: isCorrect ? 'correct' : 'incorrect', // Update question status based on correctness
+                };
+            }
+            return question;
+        });
+
+        setQuestions(updatedQuestions);
+    };
+
 
     function QuestionCard({ imageUrl, question }: QuestionCardProps) {
         return (
@@ -91,9 +118,13 @@ function QuestionView() {
         );
     }
 
-    function AnswerCard({ answers, onAnswerSelect }: AnswerCardProps) {
-        const handleCheckboxChange = (answerId: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-            onAnswerSelect(answerId, e.target.checked);
+    function AnswerCard({ answers, onAnswerSelect, questionStatus }: AnswerCardProps) {
+        const isDisabled = questionStatus !== 'unanswered'; // Assuming 'unanswered' is the default status
+
+        const handleCheckboxChange = (answerId: number) => (e: ChangeEvent<HTMLInputElement>) => {
+            if (!isDisabled) { // Only process changes if the question is not answered
+                onAnswerSelect(answerId, e.target.checked);
+            }
         };
 
         return (
@@ -106,6 +137,7 @@ function QuestionView() {
                                     key={answer.answer_id}
                                     isChecked={answer.selected}
                                     onChange={handleCheckboxChange(answer.answer_id)}
+                                    isDisabled={isDisabled}
                                 >
                                     {answer.answer}
                                 </Checkbox>
@@ -117,48 +149,58 @@ function QuestionView() {
         );
     }
 
+
     function TableCard({ questions, onQuestionSelect, viewedQuestions }: TableCardProps) {
         return (
             <Box maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden">
                 <Box p="6">
                     <Flex wrap="wrap" gap="2">
-                        {questions.map((question, index) => (
-                            <Circle
-                                key={index}
-                                size="30px"
-                                bg={
-                                    question.answers.some((answer) => answer.selected)
-                                        ? 'violet'
-                                        : viewedQuestions[index]
-                                            ? 'blue.500'
-                                            : 'gray.200'
-                                }
-                                color="white"
-                                cursor="pointer"
-                                onClick={() => onQuestionSelect(index)}
-                            >
-                                {index + 1}
-                            </Circle>
-                        ))}
+                        {questions.map((question, index) => {
+                            let bgColor = 'gray.200'; // Default background color
+                            if (question.status === 'correct') {
+                                bgColor = 'green';
+                            } else if (question.status === 'incorrect') {
+                                bgColor = 'red';
+                            } else if (viewedQuestions[index]) {
+                                bgColor = 'blue.500';
+                            }
+
+                            return (
+                                <Circle
+                                    key={index}
+                                    size="30px"
+                                    bg={bgColor}
+                                    color="white"
+                                    cursor="pointer"
+                                    onClick={() => onQuestionSelect(index)}
+                                >
+                                    {index + 1}
+                                </Circle>
+                            );
+                        })}
                     </Flex>
                     <Flex align="center" mt="4">
+                        <Circle size="15px" bg="green" color="white" mr="2" />
+                        <Text fontSize="sm" mr="4">Correct</Text>
+                        <Circle size="15px" bg="red" color="white" mr="2" />
+                        <Text fontSize="sm" mr="4"  >Wrong</Text>
                         <Circle size="15px" bg="blue.500" color="white" mr="2" />
                         <Text fontSize="sm" mr="4">Viewed</Text>
-                        <Circle size="15px" bg="violet" color="white" mr="2" />
-                        <Text fontSize="sm">Answered</Text>
                     </Flex>
                 </Box>
             </Box>
         );
     }
 
-    function ExplanationCard({ explanation }: { explanation: string }) {
+    function ExplanationCard({ explanation, showExplanation }: ExplanationCardProps) {
         return (
             <Box maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden">
                 <Box p="6">
-                    <Text fontWeight="bold" fontSize="xl" textAlign="center" mb="4">
-                        Explanation
-                    </Text>
+                    {showExplanation && (
+                        <Text fontWeight="bold" fontSize="xl" textAlign="center" mb="4">
+                            Explanation
+                        </Text>
+                    )}
                     <Text fontSize="md">{explanation}</Text>
                 </Box>
             </Box>
@@ -168,7 +210,7 @@ function QuestionView() {
     const ReportModal: React.FC<ReportModalProps> = () => {
         const { isOpen, onOpen, onClose } = useDisclosure();
         const [reportText, setReportText] = useState('');
-      
+
         const handleReportSubmit = async () => {
             const questionReport: QuestionReport = {
                 question_id: questions[currentQuestionIndex].question_id,
@@ -176,42 +218,42 @@ function QuestionView() {
                 report_date: new Date().toISOString().slice(0, 19).replace('T', ' '),
             }
 
-          await QuestionRequests.postQuestionReport(questionReport);
-          onClose(); // Close the modal after submitting
-          setReportText(''); // Clear the report text
+            await QuestionRequests.postQuestionReport(questionReport);
+            onClose(); // Close the modal after submitting
+            setReportText(''); // Clear the report text
         };
-      
+
         return (
-          <>
-            <IconButton
-              icon={<WarningIcon />}
-              onClick={onOpen}
-              aria-label="Report Question"
-            />
-            <Modal isOpen={isOpen} onClose={onClose}>
-              <ModalOverlay />
-              <ModalContent>
-                <ModalHeader>Report Question</ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
-                  <Textarea
-                    value={reportText}
-                    onChange={(e) => setReportText(e.target.value)}
-                    placeholder="If you think this question is wrong, tell us"
-                    mt={4}
-                  />
-                </ModalBody>
-                <ModalFooter>
-                  <Button mr={3} onClick={onClose}>
-                    Cancel
-                  </Button>
-                  <Button colorScheme="blue" onClick={handleReportSubmit}>Send</Button>
-                </ModalFooter>
-              </ModalContent>
-            </Modal>
-          </>
+            <>
+                <IconButton
+                    icon={<WarningIcon />}
+                    onClick={onOpen}
+                    aria-label="Report Question"
+                />
+                <Modal isOpen={isOpen} onClose={onClose}>
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalHeader>Report Question</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            <Textarea
+                                value={reportText}
+                                onChange={(e) => setReportText(e.target.value)}
+                                placeholder="If you think this question is wrong, tell us"
+                                mt={4}
+                            />
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button mr={3} onClick={onClose}>
+                                Cancel
+                            </Button>
+                            <Button colorScheme="blue" onClick={handleReportSubmit}>Send</Button>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
+            </>
         );
-      };
+    };
 
 
     return (
@@ -244,12 +286,14 @@ function QuestionView() {
                                 <AnswerCard
                                     answers={questions[currentQuestionIndex].answers}
                                     onAnswerSelect={handleAnswerSelect}
+                                    questionStatus={questions[currentQuestionIndex].status}
                                 />
                             </Box>
 
                             <Box gridArea={{ base: "5 / 1 / 6 / 2", md: "1 / 3 / 2 / 4" }}>
                                 <ExplanationCard
                                     explanation={questions[currentQuestionIndex].explanation}
+                                    showExplanation={questions[currentQuestionIndex].status !== 'unanswered'}
                                 />
                             </Box>
 
@@ -264,16 +308,24 @@ function QuestionView() {
                                         onClick={() => handleQuestionSelect(Math.max(currentQuestionIndex - 1, 0))}
                                         isDisabled={currentQuestionIndex === 0}
                                     >
-                                        Previous
+                                        ◄
                                     </Button>
 
-                                    <ReportModal/>
+                                    <ReportModal />
+
+                                    <Button
+                                        aria-label="Submit Answer"
+                                        onClick={handleSubmitAnswer}
+                                        isDisabled={questions[currentQuestionIndex].status !== 'unanswered'}
+                                    >
+                                        Submit Answer
+                                    </Button>
 
                                     <Button
                                         onClick={() => handleQuestionSelect(Math.min(currentQuestionIndex + 1, questions.length - 1))}
                                         isDisabled={currentQuestionIndex === questions.length - 1}
                                     >
-                                        Next
+                                        ►
                                     </Button>
                                 </Box>
                             </Box>
@@ -287,4 +339,4 @@ function QuestionView() {
     );
 }
 
-export default QuestionView;
+export default TopicQuestionView;

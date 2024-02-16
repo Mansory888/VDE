@@ -15,10 +15,18 @@ import {
     Center,
 } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
+import { NavLink } from 'react-router-dom';
+
 
 interface NavbarProps {
     username: string;
 }
+
+// Style for the active link
+const activeLinkStyle = {
+    fontWeight: "bold",
+    textDecoration: "underline",
+};
 
 export const Navbar: React.FC<NavbarProps> = ({ username }) => {
     const { isOpen, onToggle } = useDisclosure();
@@ -40,10 +48,10 @@ export const Navbar: React.FC<NavbarProps> = ({ username }) => {
                         as={'nav'}
                         spacing={4}
                         display={{ base: 'none', md: 'flex' }}>
-                        <Text>Home</Text>
-                        <Text>Exam</Text>
-                        <Text>Topics</Text>
-                    </HStack>ß
+                        <NavLink to="/" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Home</NavLink>
+                        <NavLink to="/ExamPage" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Exam</NavLink>
+                        <NavLink to="/TopicPage" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Topics</NavLink>
+                    </HStack>
                 </HStack>
                 <Flex alignItems={'center'}>
                     <Text>{username}</Text>
@@ -53,9 +61,9 @@ export const Navbar: React.FC<NavbarProps> = ({ username }) => {
             <Collapse in={isOpen} animateOpacity>
                 <Box pb={4} display={{ md: 'none' }}>
                     <Stack as={'nav'} spacing={4} align={'center'}>
-                        <Text>Home</Text>
-                        <Text>Exam</Text>
-                        <Text>Topics</Text>
+                    <NavLink to="/" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Home</NavLink>
+                        <NavLink to="/ExamPage" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Exam</NavLink>
+                        <NavLink to="/TopicPage" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Topics</NavLink>
                     </Stack>
                 </Box>
             </Collapse>

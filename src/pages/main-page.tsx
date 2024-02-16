@@ -129,12 +129,11 @@ function MainPage() {
 
     return (
         <ChakraProvider>
-            {/* <Grid templateColumns={{ sm: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={6} p={5}>
+            <Grid templateColumns={{ sm: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={6} p={5}>
                 {cardData.map((card, index) => (
                     <Box key={index}>{renderCard(card)}</Box>
                 ))}
-            </Grid> */}
-            <QuestionView />
+            </Grid>
         </ChakraProvider>
     );
 }

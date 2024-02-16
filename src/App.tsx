@@ -3,7 +3,9 @@ import { UserContext } from '../src/context/user.context';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/navbar';
 import MainPage from './pages/main-page';
+import ExamQuestionView from './pages/exam-page';
 import LogInRegisterPage from './pages/login-reg';
+import TopicQuestionView from './pages/topic-page';
 
 function App() {
 
@@ -24,6 +26,8 @@ function App() {
           <Navbar username={user.username} />
           <Routes>
             <Route path="/" element={<MainPage />} />
+            <Route path="/ExamPage" element={<ExamQuestionView />} />
+            <Route path="/TopicPage" element={<TopicQuestionView />} />
             {/* Add more protected routes here */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
