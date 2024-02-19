@@ -50,11 +50,12 @@ export const Navbar: React.FC<NavbarProps> = ({ username }) => {
                         display={{ base: 'none', md: 'flex' }}>
                         <NavLink to="/" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Home</NavLink>
                         <NavLink to="/ExamPage" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Exam</NavLink>
-                        <NavLink to="/TopicPage" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Topics</NavLink>
+                        <NavLink to="/TopicListPage" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>Topics</NavLink>
                     </HStack>
                 </HStack>
                 <Flex alignItems={'center'}>
-                    <Text>{username}</Text>
+                    {/* <Text>{username}</Text> */}
+                    <NavLink to="/SettingsPage" style={({ isActive }) => isActive ? activeLinkStyle : undefined}>{username}</NavLink>
                 </Flex>
             </Flex>
 

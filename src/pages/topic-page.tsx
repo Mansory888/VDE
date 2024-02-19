@@ -13,6 +13,10 @@ import { MockExam } from '../models/mockExam';
 import { Answer } from '../models/answer';
 import { QuestionReport } from '../models/questionReport';
 
+interface TopicQuestionViewProps {
+    initialQuestions: Question[];
+}
+
 type QuestionCardProps = {
     imageUrl: string;
     question: Question;
@@ -39,25 +43,20 @@ type ExplanationCardProps = {
     showExplanation: boolean; // Add this line
 }
 
-function TopicQuestionView() {
-    const [user, setUser] = useState<UserResponse | null>(null);
+const TopicQuestionView: React.FC<TopicQuestionViewProps> = ({ initialQuestions = [] }) => {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [mockExam, setMockExam] = useState<MockExam | null>(null);
     const [viewedQuestions, setViewedQuestions] = useState<{ [key: number]: boolean }>({});
 
     useEffect(() => {
-        LoadData();
-    }, []);
+        setQuestions(initialQuestions);
+        console.log(initialQuestions);
+    }, [initialQuestions]);
 
-    const LoadData = async () => {
-        const storedUser = localStorage.getItem('userResp');
-        setUser(storedUser ? JSON.parse(storedUser) : null);
-
-        const mockExam = await QuestionRequests.getExam(user?.language_id || 1);
-        setMockExam(mockExam);
-        setQuestions(mockExam.questions?.questions || []);
-    }
+    // const LoadData = async () => {
+    //     const storedUser = localStorage.getItem('userResp');
+    //     setUser(storedUser ? JSON.parse(storedUser) : null);
+    // }
 
     const handleAnswerSelect = (answerId: number, selected: boolean) => {
         const updatedQuestions = questions.map((question, index) => {
@@ -65,7 +64,7 @@ function TopicQuestionView() {
                 const updatedAnswers = question.answers.map((answer) => {
                     return answer.answer_id === answerId ? { ...answer, selected } : answer;
                 });
-    
+
                 return {
                     ...question,
                     answers: updatedAnswers,
@@ -73,7 +72,7 @@ function TopicQuestionView() {
             }
             return question;
         });
-    
+
         setQuestions(updatedQuestions);
     };
 
@@ -82,7 +81,7 @@ function TopicQuestionView() {
         setViewedQuestions((prev) => ({ ...prev, [index]: true }));
     };
 
-    const handleSubmitAnswer = () => {
+    const handleSubmitAnswer = async () => {
         const updatedQuestions = questions.map((question, index) => {
             if (index === currentQuestionIndex) {
                 // Assume multiple correct answers are possible
@@ -99,6 +98,8 @@ function TopicQuestionView() {
             }
             return question;
         });
+
+        await QuestionRequests.postQuestion(questions[currentQuestionIndex]);
 
         setQuestions(updatedQuestions);
     };

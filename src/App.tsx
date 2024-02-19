@@ -6,6 +6,8 @@ import MainPage from './pages/main-page';
 import ExamQuestionView from './pages/exam-page';
 import LogInRegisterPage from './pages/login-reg';
 import TopicQuestionView from './pages/topic-page';
+import TopicList from './pages/topic-list';
+import SettingsPage from './pages/settings-page';
 
 function App() {
 
@@ -27,7 +29,8 @@ function App() {
           <Routes>
             <Route path="/" element={<MainPage />} />
             <Route path="/ExamPage" element={<ExamQuestionView />} />
-            <Route path="/TopicPage" element={<TopicQuestionView />} />
+            <Route path="/TopicListPage" element={<TopicList />} />
+            <Route path="/SettingsPage" element={<SettingsPage />} />
             {/* Add more protected routes here */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
