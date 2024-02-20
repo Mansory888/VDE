@@ -5,6 +5,7 @@ import { User } from '../models/user';
 import { UserResponse } from '../models/userResponse';
 import UserRequests from '../Api/user.requests';
 import QuestionView from '../components/question-view';
+import { useTranslation } from 'react-i18next';
 
 interface UserTableCardProps {
     users: UserResponse[] ;
@@ -15,14 +16,15 @@ const UserTableCard: React.FC<UserTableCardProps> = ({ users, currentUser }) => 
     // Use Chakra's useColorModeValue to switch colors based on the theme, if you use dark/light mode in your app
     const bgColor = useColorModeValue('gray.200', 'gray.700');
     const highlightColor = useColorModeValue('teal.100', 'teal.700');
+    const { t } = useTranslation();
 
     return (
         <Box borderWidth="1px" borderRadius="lg" overflow="hidden" p={4}>
             <Table variant="simple">
                 <Thead>
                     <Tr>
-                        <Th>User</Th>
-                        <Th isNumeric>Points</Th>
+                        <Th>{t('home')}</Th>
+                        <Th isNumeric>{t('points')}</Th>
                     </Tr>
                 </Thead>
                 <Tbody>

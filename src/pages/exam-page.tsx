@@ -12,6 +12,7 @@ import QuestionRequests from '../Api/question.requests';
 import { MockExam } from '../models/mockExam';
 import { Answer } from '../models/answer';
 import { QuestionReport } from '../models/questionReport';
+import { useTranslation } from 'react-i18next';
 
 type QuestionCardProps = {
     imageUrl: string;
@@ -41,6 +42,7 @@ function ExamQuestionView() {
     const [viewedQuestions, setViewedQuestions] = useState<{ [key: number]: boolean }>({});
     const initialTime = 30 * 60;
     const [timeLeft, setTimeLeft] = useState(initialTime);
+    const { t } = useTranslation();
 
     useEffect(() => {
         LoadData();
@@ -149,9 +151,9 @@ function ExamQuestionView() {
                     </Flex>
                     <Flex align="center" mt="4">
                         <Circle size="15px" bg="blue.500" color="white" mr="2" />
-                        <Text fontSize="sm" mr="4">Viewed</Text>
+                        <Text fontSize="sm" mr="4">{t('viewed')}</Text>
                         <Circle size="15px" bg="violet" color="white" mr="2" />
-                        <Text fontSize="sm">Answered</Text>
+                        <Text fontSize="sm">{t('answered')}</Text>
                     </Flex>
                 </Box>
             </Box>
@@ -192,7 +194,7 @@ function ExamQuestionView() {
             <Box maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden">
                 <Box p="6">
                     <Text fontWeight="bold" fontSize="xl" textAlign="center" mb="4">
-                        Remaining Time
+                    {t('remaining_time')}
                     </Text>
                     {/* Display the formatted time left */}
                     <Text fontSize="2xl" textAlign="center" mb="4">
@@ -229,21 +231,21 @@ function ExamQuestionView() {
             <Modal isOpen={isOpen} onClose={onClose}>
               <ModalOverlay />
               <ModalContent>
-                <ModalHeader>Report Question</ModalHeader>
+                <ModalHeader>{t('report_question')}</ModalHeader>
                 <ModalCloseButton />
                 <ModalBody>
                   <Textarea
                     value={reportText}
                     onChange={(e) => setReportText(e.target.value)}
-                    placeholder="If you think this question is wrong, tell us"
+                    placeholder={t('report_explanation')}
                     mt={4}
                   />
                 </ModalBody>
                 <ModalFooter>
                   <Button mr={3} onClick={onClose}>
-                    Cancel
+                  {t('cancel')}
                   </Button>
-                  <Button colorScheme="blue" onClick={handleReportSubmit}>Send</Button>
+                  <Button colorScheme="blue" onClick={handleReportSubmit}>{t('send')}</Button>
                 </ModalFooter>
               </ModalContent>
             </Modal>
@@ -300,7 +302,7 @@ function ExamQuestionView() {
                                         onClick={() => handleQuestionSelect(Math.max(currentQuestionIndex - 1, 0))}
                                         isDisabled={currentQuestionIndex === 0}
                                     >
-                                        Previous
+                                         {t('previous')}
                                     </Button>
 
                                     <ReportModal/>
@@ -309,7 +311,7 @@ function ExamQuestionView() {
                                         onClick={() => handleQuestionSelect(Math.min(currentQuestionIndex + 1, questions.length - 1))}
                                         isDisabled={currentQuestionIndex === questions.length - 1}
                                     >
-                                        Next
+                                        {t('next')}
                                     </Button>
                                 </Box>
                             </Box>

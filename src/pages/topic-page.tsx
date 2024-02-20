@@ -12,6 +12,7 @@ import QuestionRequests from '../Api/question.requests';
 import { MockExam } from '../models/mockExam';
 import { Answer } from '../models/answer';
 import { QuestionReport } from '../models/questionReport';
+import { useTranslation } from 'react-i18next';
 
 interface TopicQuestionViewProps {
     initialQuestions: Question[];
@@ -47,6 +48,7 @@ const TopicQuestionView: React.FC<TopicQuestionViewProps> = ({ initialQuestions 
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [viewedQuestions, setViewedQuestions] = useState<{ [key: number]: boolean }>({});
+    const { t } = useTranslation();
 
     useEffect(() => {
         setQuestions(initialQuestions);
@@ -182,11 +184,11 @@ const TopicQuestionView: React.FC<TopicQuestionViewProps> = ({ initialQuestions 
                     </Flex>
                     <Flex align="center" mt="4">
                         <Circle size="15px" bg="green" color="white" mr="2" />
-                        <Text fontSize="sm" mr="4">Correct</Text>
+                        <Text fontSize="sm" mr="4">{t('correct')}</Text>
                         <Circle size="15px" bg="red" color="white" mr="2" />
-                        <Text fontSize="sm" mr="4"  >Wrong</Text>
+                        <Text fontSize="sm" mr="4"  >{t('wrong')}</Text>
                         <Circle size="15px" bg="blue.500" color="white" mr="2" />
-                        <Text fontSize="sm" mr="4">Viewed</Text>
+                        <Text fontSize="sm" mr="4">{t('viewed')}</Text>
                     </Flex>
                 </Box>
             </Box>
@@ -199,7 +201,7 @@ const TopicQuestionView: React.FC<TopicQuestionViewProps> = ({ initialQuestions 
                 <Box p="6">
                     {showExplanation && (
                         <Text fontWeight="bold" fontSize="xl" textAlign="center" mb="4">
-                            Explanation
+                            {t('explanation')}
                         </Text>
                     )}
                     <Text fontSize="md">{explanation}</Text>
@@ -234,21 +236,21 @@ const TopicQuestionView: React.FC<TopicQuestionViewProps> = ({ initialQuestions 
                 <Modal isOpen={isOpen} onClose={onClose}>
                     <ModalOverlay />
                     <ModalContent>
-                        <ModalHeader>Report Question</ModalHeader>
+                        <ModalHeader>{t('report_question')}</ModalHeader>
                         <ModalCloseButton />
                         <ModalBody>
                             <Textarea
                                 value={reportText}
                                 onChange={(e) => setReportText(e.target.value)}
-                                placeholder="If you think this question is wrong, tell us"
+                                placeholder={t('report_explanation')}
                                 mt={4}
                             />
                         </ModalBody>
                         <ModalFooter>
                             <Button mr={3} onClick={onClose}>
-                                Cancel
+                            {t('cancel')}
                             </Button>
-                            <Button colorScheme="blue" onClick={handleReportSubmit}>Send</Button>
+                            <Button colorScheme="blue" onClick={handleReportSubmit}>{t('send')}</Button>
                         </ModalFooter>
                     </ModalContent>
                 </Modal>
@@ -319,7 +321,7 @@ const TopicQuestionView: React.FC<TopicQuestionViewProps> = ({ initialQuestions 
                                         onClick={handleSubmitAnswer}
                                         isDisabled={questions[currentQuestionIndex].status !== 'unanswered'}
                                     >
-                                        Submit Answer
+                                        {t('sumbit_answer')}
                                     </Button>
 
                                     <Button
