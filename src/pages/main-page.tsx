@@ -1,14 +1,15 @@
 import React from 'react';
-import { useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Text, Container, VStack, Table, Tbody, Th, Tr, Td, Thead, useColorModeValue, ChakraProvider, Grid, } from '@chakra-ui/react';
 import { User } from '../models/user';
 import { UserResponse } from '../models/userResponse';
 import UserRequests from '../Api/user.requests';
 import QuestionView from '../components/question-view';
 import { useTranslation } from 'react-i18next';
+import FinishPage from './finish-page';
 
 interface UserTableCardProps {
-    users: UserResponse[] ;
+    users: UserResponse[];
     currentUser: string;
 }
 
@@ -61,23 +62,23 @@ function MainPage() {
 
 
     const LoadData = async () => {
-        try { 
+        try {
             const users = await UserRequests.getUsers();
             const storedUser = localStorage.getItem('userResp');
             let currentUser: UserResponse | null = null;
-    
+
             if (storedUser) {
                 currentUser = JSON.parse(storedUser);
                 setCurrentUser(currentUser);
             }
-    
+
             if (users) {
                 // Sort users by score in descending order
                 const sortedUsers = [...users].sort((a, b) => (b.score || 0) - (a.score || 0));
-    
+
                 // Get the top 3 users
                 let topUsers = sortedUsers.slice(0, 3);
-    
+
                 // Check if the current user is not in the top 3 and include them if necessary
                 if (currentUser && !topUsers.find(user => user.username === currentUser?.username)) {
                     // This finds the current user in the full list (assuming they exist in it) and adds them to the list
@@ -86,12 +87,12 @@ function MainPage() {
                         topUsers.push(currentUserInList);
                     }
                 }
-    
+
                 // Update the state with the top 3 users and the current user
                 setUsers(topUsers);
             }
         } catch (error) {
-            
+
         }
     };
 
@@ -114,7 +115,7 @@ function MainPage() {
         },
         // Add more card data objects as needed
     ];
-    
+
 
 
     const renderCard = (card: any) => {
@@ -130,13 +131,11 @@ function MainPage() {
     };
 
     return (
-        <ChakraProvider>
-            <Grid templateColumns={{ sm: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={6} p={5}>
-                {cardData.map((card, index) => (
-                    <Box key={index}>{renderCard(card)}</Box>
-                ))}
-            </Grid>
-        </ChakraProvider>
+        <Grid templateColumns={{ sm: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }} gap={6} p={5}>
+            {cardData.map((card, index) => (
+                <Box key={index}>{renderCard(card)}</Box>
+            ))}
+        </Grid>        
     );
 }
 

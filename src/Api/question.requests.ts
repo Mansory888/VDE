@@ -57,5 +57,18 @@ export default class QuestionRequests {
     }
   }
 
+  static async postMockExam(mockExam: MockExam): Promise<MockExam> {
+    try {
+      const options = {
+        method: 'POST',
+        body: JSON.stringify(mockExam),
+      };
+
+      return await fetchWithToken('mockexams', options);
+    } catch (error: any) {
+      throw Error(error.message);
+    }
+  }
+
 
 }

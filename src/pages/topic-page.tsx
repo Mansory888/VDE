@@ -52,7 +52,6 @@ const TopicQuestionView: React.FC<TopicQuestionViewProps> = ({ initialQuestions 
 
     useEffect(() => {
         setQuestions(initialQuestions);
-        console.log(initialQuestions);
     }, [initialQuestions]);
 
     // const LoadData = async () => {

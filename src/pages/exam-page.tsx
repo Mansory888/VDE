@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, ChangeEvent, useRef } from 'react';
 import {
     Box, Text, Button, Image, Checkbox, CheckboxGroup, Stack,
     Circle, Flex, Grid, Center, IconButton, Modal,
@@ -13,6 +13,7 @@ import { MockExam } from '../models/mockExam';
 import { Answer } from '../models/answer';
 import { QuestionReport } from '../models/questionReport';
 import { useTranslation } from 'react-i18next';
+import FinishPage from './finish-page';
 
 type QuestionCardProps = {
     imageUrl: string;
@@ -30,8 +31,14 @@ type TableCardProps = {
     viewedQuestions: { [key: number]: boolean };
 };
 
-interface ReportModalProps {
+type ReportModalProps = {
 
+}
+
+type TimerCardProps = {
+    timeLeft: number;
+    formatTimeLeft: (time: number) => string;
+    onRetryExam: () => Promise<void>;
 }
 
 function ExamQuestionView() {
@@ -39,20 +46,48 @@ function ExamQuestionView() {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [mockExam, setMockExam] = useState<MockExam | null>(null);
+    const [ResultmockExam, setResultMockExam] = useState<MockExam | null>(null);
     const [viewedQuestions, setViewedQuestions] = useState<{ [key: number]: boolean }>({});
-    const initialTime = 30 * 60;
+    const initialTime = 10;
     const [timeLeft, setTimeLeft] = useState(initialTime);
+    const [finished, setIsFinished] = useState(false);
+    const mockExamRef = useRef<MockExam | null>(mockExam);
     const { t } = useTranslation();
 
     useEffect(() => {
         LoadData();
+
+        const interval = setInterval(() => {
+            setTimeLeft((prevTime) => {
+                if (prevTime <= 1) {
+                    clearInterval(interval);
+                    finishExam();
+                    return 0;
+                }
+                return prevTime - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+
     }, []);
+
+    useEffect(() => {
+        mockExamRef.current = mockExam;
+    }, [mockExam]);
+
+    const formatTimeLeft = (time: number): string => {
+        const minutes = Math.floor(time / 60);
+        const seconds = time % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    };
 
     const LoadData = async () => {
         const storedUser = localStorage.getItem('userResp');
         setUser(storedUser ? JSON.parse(storedUser) : null);
 
         const mockExam = await QuestionRequests.getExam(user?.language_id || 1);
+
         setMockExam(mockExam);
         setQuestions(mockExam.questions?.questions || []);
     }
@@ -77,7 +112,13 @@ function ExamQuestionView() {
     };
 
     const finishExam = async () => {
-
+        const currentMockExam = mockExamRef.current;
+        if (currentMockExam) {
+            currentMockExam.questions!.questions = [...questions];
+            const responseExam = await QuestionRequests.postMockExam(currentMockExam);
+            setResultMockExam(responseExam);
+            setIsFinished(true);
+        }
     }
 
     const handleQuestionSelect = (index: number) => {
@@ -160,46 +201,17 @@ function ExamQuestionView() {
         );
     }
 
-    function TimerCard({ explanation, onTimerEnd }: {onTimerEnd: () => void }) {
-        // Set the initial countdown time (30 minutes = 1800 seconds)
-        const initialTime = 30 * 60;
-    
-        // State to keep track of remaining time in seconds
-        const [timeLeft, setTimeLeft] = useState(initialTime);
-    
-        // Convert the remaining time in seconds to a display format (MM:SS)
-        const formatTimeLeft = (time:any) => {
-            const minutes = Math.floor(time / 60);
-            const seconds = time % 60;
-            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        };
-    
-        useEffect(() => {
-            // If timeLeft is 0, call the onTimerEnd function and return to stop the timer
-            if (timeLeft === 0) {
-                onTimerEnd();
-                return;
-            }
-    
-            // Set up a timer to decrement the timeLeft state every second
-            const interval = setInterval(() => {
-                setTimeLeft((timeLeft) => timeLeft - 1);
-            }, 1000);
-    
-            // Clear the interval timer if the component is unmounted
-            return () => clearInterval(interval);
-        }, [timeLeft, onTimerEnd]);
-    
+    function TimerCard({ timeLeft, formatTimeLeft, onRetryExam }: TimerCardProps) {
         return (
             <Box maxW="sm" borderWidth="1px" borderRadius="lg" overflow="hidden">
                 <Box p="6">
                     <Text fontWeight="bold" fontSize="xl" textAlign="center" mb="4">
-                    {t('remaining_time')}
+                        Remaining Time
                     </Text>
-                    {/* Display the formatted time left */}
                     <Text fontSize="2xl" textAlign="center" mb="4">
                         {formatTimeLeft(timeLeft)}
                     </Text>
+                    <Center> <Button mt={4} onClick={onRetryExam} >Finish Now</Button> </Center>
                 </Box>
             </Box>
         );
@@ -208,7 +220,7 @@ function ExamQuestionView() {
     const ReportModal: React.FC<ReportModalProps> = () => {
         const { isOpen, onOpen, onClose } = useDisclosure();
         const [reportText, setReportText] = useState('');
-      
+
         const handleReportSubmit = async () => {
             const questionReport: QuestionReport = {
                 question_id: questions[currentQuestionIndex].question_id,
@@ -216,112 +228,116 @@ function ExamQuestionView() {
                 report_date: new Date().toISOString().slice(0, 19).replace('T', ' '),
             }
 
-          await QuestionRequests.postQuestionReport(questionReport);
-          onClose(); // Close the modal after submitting
-          setReportText(''); // Clear the report text
+            await QuestionRequests.postQuestionReport(questionReport);
+            onClose(); // Close the modal after submitting
+            setReportText(''); // Clear the report text
         };
-      
+
         return (
-          <>
-            <IconButton
-              icon={<WarningIcon />}
-              onClick={onOpen}
-              aria-label="Report Question"
-            />
-            <Modal isOpen={isOpen} onClose={onClose}>
-              <ModalOverlay />
-              <ModalContent>
-                <ModalHeader>{t('report_question')}</ModalHeader>
-                <ModalCloseButton />
-                <ModalBody>
-                  <Textarea
-                    value={reportText}
-                    onChange={(e) => setReportText(e.target.value)}
-                    placeholder={t('report_explanation')}
-                    mt={4}
-                  />
-                </ModalBody>
-                <ModalFooter>
-                  <Button mr={3} onClick={onClose}>
-                  {t('cancel')}
-                  </Button>
-                  <Button colorScheme="blue" onClick={handleReportSubmit}>{t('send')}</Button>
-                </ModalFooter>
-              </ModalContent>
-            </Modal>
-          </>
+            <>
+                <IconButton
+                    icon={<WarningIcon />}
+                    onClick={onOpen}
+                    aria-label="Report Question"
+                />
+                <Modal isOpen={isOpen} onClose={onClose}>
+                    <ModalOverlay />
+                    <ModalContent>
+                        <ModalHeader>{t('report_question')}</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            <Textarea
+                                value={reportText}
+                                onChange={(e) => setReportText(e.target.value)}
+                                placeholder={t('report_explanation')}
+                                mt={4}
+                            />
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button mr={3} onClick={onClose}>
+                                {t('cancel')}
+                            </Button>
+                            <Button colorScheme="blue" onClick={handleReportSubmit}>{t('send')}</Button>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
+            </>
         );
-      };
+    };
 
 
     return (
-        <Center>
-            <Box p="5">
-                {questions.length > 0 && (
-                    <Box>
-                        <Grid
-                            templateColumns={{ base: "1fr", md: "1fr 1fr 1fr" }}
-                            templateRows={{ base: "repeat(5, auto)", md: "repeat(2, auto)" }}
-                            gap={{ base: "3", md: "2" }}
-                            alignItems="start"
-                        >
-                            <Box gridArea={{ base: "4 / 1 / 5 / 2", md: "1 / 1 / 2 / 2" }}>
-                                <TableCard
-                                    questions={questions}
-                                    onQuestionSelect={handleQuestionSelect}
-                                    viewedQuestions={viewedQuestions}
-                                />
-                            </Box>
+        <Box>
+            {finished ? (
+                <FinishPage inputMockExam={ResultmockExam} />
+            ) : (
+                <Center>
+                    <Box p="5">
+                        {questions.length > 0 && (
+                            <Box>
+                                <Grid
+                                    templateColumns={{ base: "1fr", md: "1fr 1fr 1fr" }}
+                                    templateRows={{ base: "repeat(5, auto)", md: "repeat(2, auto)" }}
+                                    gap={{ base: "3", md: "2" }}
+                                    alignItems="start"
+                                >
+                                    <Box gridArea={{ base: "4 / 1 / 5 / 2", md: "1 / 1 / 2 / 2" }}>
+                                        <TableCard
+                                            questions={questions}
+                                            onQuestionSelect={handleQuestionSelect}
+                                            viewedQuestions={viewedQuestions}
+                                        />
+                                    </Box>
 
-                            <Box gridArea={{ base: "1 / 1 / 2 / 2", md: "1 / 2 / 2 / 3" }}>
-                                <QuestionCard
-                                    imageUrl={questions[currentQuestionIndex].image}
-                                    question={questions[currentQuestionIndex]}
-                                />
-                            </Box>
+                                    <Box gridArea={{ base: "1 / 1 / 2 / 2", md: "1 / 2 / 2 / 3" }}>
+                                        <QuestionCard
+                                            imageUrl={questions[currentQuestionIndex].image}
+                                            question={questions[currentQuestionIndex]}
+                                        />
+                                    </Box>
 
-                            <Box gridArea={{ base: "2 / 1 / 3 / 2", md: "2 / 2 / 3 / 3" }}>
-                                <AnswerCard
-                                    answers={questions[currentQuestionIndex].answers}
-                                    onAnswerSelect={handleAnswerSelect}
-                                />
-                            </Box>
+                                    <Box gridArea={{ base: "2 / 1 / 3 / 2", md: "2 / 2 / 3 / 3" }}>
+                                        <AnswerCard
+                                            answers={questions[currentQuestionIndex].answers}
+                                            onAnswerSelect={handleAnswerSelect}
+                                        />
+                                    </Box>
 
-                            <Box gridArea={{ base: "5 / 1 / 6 / 2", md: "1 / 3 / 2 / 4" }}>
-                            <TimerCard onTimerEnd={finishExam} />
-                            </Box>
+                                    <Box gridArea={{ base: "5 / 1 / 6 / 2", md: "1 / 3 / 2 / 4" }}>
+                                        <TimerCard timeLeft={timeLeft} formatTimeLeft={formatTimeLeft} onRetryExam={finishExam} />
+                                    </Box>
 
-                            <Box
-                                borderWidth="1px"
-                                borderRadius="lg"
-                                overflow="hidden"
-                                gridArea={{ base: "3 / 1 / 4 / 2", md: "3 / 2 / 4 / 3" }}
-                            >
-                                <Box display="flex" justifyContent="space-between" p="6">
-                                    <Button
-                                        onClick={() => handleQuestionSelect(Math.max(currentQuestionIndex - 1, 0))}
-                                        isDisabled={currentQuestionIndex === 0}
+                                    <Box
+                                        borderWidth="1px"
+                                        borderRadius="lg"
+                                        overflow="hidden"
+                                        gridArea={{ base: "3 / 1 / 4 / 2", md: "3 / 2 / 4 / 3" }}
                                     >
-                                         {t('previous')}
-                                    </Button>
+                                        <Box display="flex" justifyContent="space-between" p="6">
+                                            <Button
+                                                onClick={() => handleQuestionSelect(Math.max(currentQuestionIndex - 1, 0))}
+                                                isDisabled={currentQuestionIndex === 0}
+                                            >
+                                                {t('previous')}
+                                            </Button>
 
-                                    <ReportModal/>
+                                            <ReportModal />
 
-                                    <Button
-                                        onClick={() => handleQuestionSelect(Math.min(currentQuestionIndex + 1, questions.length - 1))}
-                                        isDisabled={currentQuestionIndex === questions.length - 1}
-                                    >
-                                        {t('next')}
-                                    </Button>
-                                </Box>
+                                            <Button
+                                                onClick={() => handleQuestionSelect(Math.min(currentQuestionIndex + 1, questions.length - 1))}
+                                                isDisabled={currentQuestionIndex === questions.length - 1}
+                                            >
+                                                {t('next')}
+                                            </Button>
+                                        </Box>
+                                    </Box>
+                                </Grid>
                             </Box>
-                        </Grid>
+                        )}
                     </Box>
-                )}
-            </Box>
-        </Center>
-
-
+                </Center>
+            )}
+        </Box>
     );
 }
 
