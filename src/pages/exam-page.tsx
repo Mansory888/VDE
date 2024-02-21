@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect, ChangeEvent, useRef } from 'react';
+import { useState, useEffect, ChangeEvent, useRef, useContext } from 'react';
 import {
     Box, Text, Button, Image, Checkbox, CheckboxGroup, Stack,
     Circle, Flex, Grid, Center, IconButton, Modal,
@@ -14,6 +14,8 @@ import { Answer } from '../models/answer';
 import { QuestionReport } from '../models/questionReport';
 import { useTranslation } from 'react-i18next';
 import FinishPage from './finish-page';
+import { ExamContext } from '../context/exam.context';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 type QuestionCardProps = {
     imageUrl: string;
@@ -46,12 +48,14 @@ function ExamQuestionView() {
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [mockExam, setMockExam] = useState<MockExam | null>(null);
-    const [ResultmockExam, setResultMockExam] = useState<MockExam | null>(null);
+    const [isExamUpdated, setIsExamUpdated] = useState(false);
     const [viewedQuestions, setViewedQuestions] = useState<{ [key: number]: boolean }>({});
-    const initialTime = 10;
+    const initialTime = 1800;
     const [timeLeft, setTimeLeft] = useState(initialTime);
     const [finished, setIsFinished] = useState(false);
     const mockExamRef = useRef<MockExam | null>(mockExam);
+    const { setExam } = useContext(ExamContext);
+    const navigate = useNavigate();
     const { t } = useTranslation();
 
     useEffect(() => {
@@ -75,6 +79,14 @@ function ExamQuestionView() {
     useEffect(() => {
         mockExamRef.current = mockExam;
     }, [mockExam]);
+
+    useEffect(() => {
+        if (isExamUpdated) {
+            navigate('/FinishPage');
+            setIsExamUpdated(false); 
+            console.log('');
+        }
+    }, [isExamUpdated, navigate]);
 
     const formatTimeLeft = (time: number): string => {
         const minutes = Math.floor(time / 60);
@@ -115,9 +127,13 @@ function ExamQuestionView() {
         const currentMockExam = mockExamRef.current;
         if (currentMockExam) {
             currentMockExam.questions!.questions = [...questions];
-            const responseExam = await QuestionRequests.postMockExam(currentMockExam);
-            setResultMockExam(responseExam);
-            setIsFinished(true);
+            try {
+                const responseExam = await QuestionRequests.postMockExam(currentMockExam);
+                setExam(responseExam);
+                setIsExamUpdated(true);
+            } catch (error) {
+                console.error("Failed to post mock exam", error);
+            }
         }
     }
 
@@ -269,7 +285,7 @@ function ExamQuestionView() {
     return (
         <Box>
             {finished ? (
-                <FinishPage inputMockExam={ResultmockExam} />
+                <FinishPage />
             ) : (
                 <Center>
                     <Box p="5">

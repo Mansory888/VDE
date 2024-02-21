@@ -8,6 +8,7 @@ import LogInRegisterPage from './pages/login-reg';
 import TopicQuestionView from './pages/topic-page';
 import TopicList from './pages/topic-list';
 import SettingsPage from './pages/settings-page';
+import FinishPage from './pages/finish-page';
 
 function App() {
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/ExamPage" element={<ExamQuestionView />} />
             <Route path="/TopicListPage" element={<TopicList />} />
             <Route path="/SettingsPage" element={<SettingsPage />} />
+            <Route path="/FinishPage" element={<FinishPage />} />
             {/* Add more protected routes here */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

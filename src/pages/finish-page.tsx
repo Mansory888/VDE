@@ -1,8 +1,9 @@
 import { Box, Text, Collapse, Button, useDisclosure, Grid, Flex, VStack } from '@chakra-ui/react';
 import { Question } from '../models/question';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { MockExam } from '../models/mockExam';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { ExamContext } from '../context/exam.context';
 
 
 type QuestionsListCardProps = {
@@ -91,19 +92,16 @@ const QuestionsListCard: React.FC<QuestionsListCardProps> = ({ questions }) => {
 
 
 
-const FinishPage: React.FC<finishPageProps> = ({ inputMockExam }) => {
+const FinishPage = () => {
     const [mockExam, setMockExam] = useState<MockExam | null>(null);
+    const { exam } = useContext(ExamContext);
 
     useEffect(() => {
-        if (inputMockExam) {
-            const deepCopiedMockExam = JSON.parse(JSON.stringify(inputMockExam));
-            setMockExam(deepCopiedMockExam);
+        //console.log(exam);
+        if (exam) {
+            setMockExam(exam);
         }
-    }, [inputMockExam]);
-
-    useEffect(() => {
-        console.log(' changed:', mockExam);
-    }, [mockExam]);
+    }, [exam]);
 
     const renderCard = (card: any) => {
         if (card.type === 'results') {

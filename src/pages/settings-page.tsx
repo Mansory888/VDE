@@ -1,13 +1,21 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import { Box, Grid, GridItem, Text, Select, Input, Button } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
+import { UserContext } from '../context/user.context';
 
 function SettingsPage() {
   const { t, i18n } = useTranslation();
+  const { setUser } = useContext(UserContext);
 
   const handleChangeLanguage = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newLanguage = event.target.value;
     i18n.changeLanguage(newLanguage);
+  };
+
+  const handleLogout = () => {
+    setUser(null); 
+    localStorage.removeItem('userResp');
+    // Perform additional cleanup if necessary, e.g., clearing local storage, redirecting, etc.
   };
 
 
@@ -24,6 +32,7 @@ function SettingsPage() {
             <option value="lt">Lithunian</option>
             <option value="ru">Russian</option>
           </Select>
+          <Button mt={4} onClick={handleLogout}>Logout</Button>
         </Box>
       </GridItem>
       
